@@ -1,0 +1,180 @@
+{
+    "terraform": {
+        "required_providers": [
+            {
+                "huaweicloud": {
+                    "source": "huawei.com/provider/huaweicloud",
+                    "version": ">=1.44.0"
+                }
+            }
+        ]
+    },
+    "provider": {
+        "huaweicloud": {
+            "cloud": "myhuaweicloud.com",
+            "endpoints": {
+                "iam": "iam.ap-southeast-3.myhuaweicloud.com",
+                "dns": "dns.ap-southeast-3.myhuaweicloud.com",
+                "bss": "bss.myhuaweicloud.com"
+            },
+            "insecure": true,
+            "region": "ap-southeast-3",
+            "auth_url": "https://iam.ap-southeast-3.myhuaweicloud.com/v3"
+        }
+    },
+    "variable": {
+        "subnet_id": {
+            "default": "",
+            "description": "Subnet ID. This template uses an existing subnet. Select a subnet in the VPC where backend service servers are located. To query the subnet ID, see the deployment guide.",
+            "type": "string",
+            "nullable": "false",
+            "validation": {
+                "condition": "${length(regexall(\"^[a-z0-9]{8}(-[a-z0-9]{4}){3}-[a-z0-9]{12}$\",var.subnet_id))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "security_group_id": {
+            "default": "",
+            "description": "Security group ID. This template uses an existing security group. Select a security group that backend service servers belong to. To query the security group ID, see the deployment guide.",
+            "type": "string",
+            "nullable": "false",
+            "validation": {
+                "condition": "${length(regexall(\"^[a-z0-9]{8}(-[a-z0-9]{4}){3}-[a-z0-9]{12}$\",var.security_group_id))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "ecs_name": {
+            "default": "waf_on_modsecurity_demo",
+            "description": "Name of the ECS used for deploying a WAF. The name must be unique. Value range: 1 to 54 characters. Can include letters, digits, underscores (_), hyphens (-), and periods (.). Default name: waf_on_modsecurity_demo.",
+            "type": "string",
+            "nullable": "false",
+            "validation": {
+                "condition": "${length(regexall(\"^[a-zA-Z0-9_\\\\.-]{1,54}$\",var.ecs_name))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "ecs_flavor": {
+            "default": "s6.medium.2",
+            "description": "Specifications of the ECS used for deploying a WAF. For details about specifications, see the deployment guide. Default: s6.medium.2 (s6|1vCPUs|2GiB).",
+            "type": "string",
+            "nullable": "false",
+            "validation": {
+                "condition": "${length(regexall(\"^([a-z][a-z0-9]{0,3}\\\\.)(small\\\\.|medium\\\\.|(x||[1-9][0-9]{0,1}x)large\\\\.)[1-9][0-9]{0,1}$\",var.ecs_flavor))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "ecs_image": {
+            "default": "CentOS 7.6 64bit",
+            "description": "Image of the ECS used for deploying a WAF. For details about specifications, see the deployment guide. Default: CentOS 7.6 64bit.",
+            "type": "string",
+            "nullable": "false",
+            "validation": {
+                "condition": "${length(regexall(\"^([A-Za-z0-9\\\\s\\\\.])+([A-Za-z0-9])$\",var.ecs_image))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "ecs_password": {
+            "default": "",
+            "description": "Initial password of the ECS used for deploying a WAF. After the ECS is created, reset the password by referring to the deployment guide. Value range: 8 to 26 characters. Must include at least three of the following character types: uppercase letters, lowercase letters, digits, and special characters ($!@%-_=+[]:./^,{}?). The password cannot contain the username or the username spelled backwards. Administrator: root",
+            "type": "string",
+            "nullable": "false",
+            "sensitive": "true"
+        },
+        "bandwidth_size": {
+            "default": "5",
+            "description": "Bandwidth size. This template is billed by bandwidth. Value range: 1 to 2,000 Mbit/s. Default value: 5 Mbit/s.",
+            "type": "number",
+            "nullable": "false",
+            "validation": {
+                "condition": "${length(regexall(\"^(1[0-9]{3}|[1-9][0-9]{0,2}|2000)$\",var.bandwidth_size))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "ip_list": {
+            "default": "",
+            "description": "Backend service server private IP addresses and ports in format of IP address 1:Port 1,IP address 2:Port 2. For more details, see the deployment guide.",
+            "type": "string",
+            "nullable": "false",
+            "validation": {
+                "condition": "${length(regexall(\"^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?):([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]),)+((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?):([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$\",var.ip_list))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "ssl_certificate": {
+            "default": "",
+            "description": "SSL certificate public key file name, including the extension. After the template is deployed, upload this certificate file to the usr/local/nginx/ssl/ directory on the WAF ECS. For details, see the deployment guide.",
+            "type": "string",
+            "nullable": "false",
+            "validation": {
+                "condition": "${length(regexall(\"^(.+\\\\.(cer|crt))$\",var.ssl_certificate))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "ssl_certificate_key": {
+            "default": "",
+            "description": "SSL certificate private key file name, including the extension. After the template is deployed, upload this certificate file to the /usr/local/nginx/ssl/ directory on the WAF ECS. For details, see the deployment guide.",
+            "type": "string",
+            "nullable": "false",
+            "validation": {
+                "condition": "${length(regexall(\"^(.+\\\\.(key))$\",var.ssl_certificate_key))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        }
+    },
+    "data": {
+        "huaweicloud_availability_zones": {
+            "availability_zones": {}
+        },
+        "huaweicloud_images_image": {
+            "centos": {
+                "name": "${var.ecs_image}",
+                "visibility": "public",
+                "most_recent": true
+            }
+        }
+    },
+    "resource": {
+        "huaweicloud_vpc_eip": {
+            "eip": {
+                "name": "${var.ecs_name}-eip",
+                "bandwidth": {
+                    "name": "${var.ecs_name}-bandwidth",
+                    "share_type": "PER",
+                    "size": "${var.bandwidth_size}",
+                    "charge_mode": "bandwidth"
+                },
+                "publicip": {
+                    "type": "5_bgp"
+                }
+            }
+        },
+        "huaweicloud_compute_instance": {
+            "master": {
+                "name": "${var.ecs_name}",
+                "availability_zone": "${data.huaweicloud_availability_zones.availability_zones.names[0]}",
+                "image_id": "${data.huaweicloud_images_image.centos.id}",
+                "flavor_id": "${var.ecs_flavor}",
+                "security_group_ids": [
+                    "${var.security_group_id}"
+                ],
+                "system_disk_type": "SAS",
+                "system_disk_size": 100,
+                "admin_pass": "${var.ecs_password}",
+                "delete_disks_on_termination": true,
+                "network": {
+                    "uuid": "${var.subnet_id}"
+                },
+                "eip_id": "${huaweicloud_vpc_eip.eip.id}",
+                "user_data": "#!/bin/bash\necho 'root:${var.ecs_password}' | chpasswd\nwget -P /tmp/ https://documentation-samples-4.obs.ap-southeast-3.myhuaweicloud.com/solution-as-code-moudle/build-a-waf-based-on-modsecurity/userdata/configure_nginx_modsecurity.sh\nchmod 700 /tmp/configure_nginx_modsecurity.sh\nsh /tmp/configure_nginx_modsecurity.sh ${var.ip_list} ${var.ssl_certificate} ${var.ssl_certificate_key}\nrm -rf /tmp/configure_nginx_modsecurity.sh"
+            }
+        }
+    },
+    "output": {
+        "说明": {
+            "depends_on": [
+                "huaweicloud_vpc_eip.eip"
+            ],
+            "value": "1. The public IP address of the WAF is ${huaweicloud_vpc_eip.eip.address}. You can use this IP to access web servers from your browser. 2. After the template is deployed, upload SSL certificate public and private key files to the /usr/local/nginx/ssl/ directory."
+        }
+    }
+}
